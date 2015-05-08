@@ -44,10 +44,13 @@ module ActiveModel
         @cached_serializer = serializer
         @klass             = @cached_serializer.class
         if is_cached?
+          Rails.logger.info "AMS: looup using key #{cache_key} (#{@cached_serializer.class}: #{@cached_serializer.object.id})"
           @klass._cache.fetch(cache_key, @klass._cache_options) do
+            Rails.logger.info "AMS: key does not exist, building"
             yield
           end
         elsif is_fragment_cached?
+          Rails.logger.info "AMS: fetching fragment cache for #{@cached_serializer.class} #{@cached_serializer.object.id}"
           FragmentCache.new(self, @cached_serializer, @options, @root).fetch
         else
           yield
@@ -63,7 +66,9 @@ module ActiveModel
       end
 
       def cache_key
-        (@klass._cache_key) ? "#{@klass._cache_key}/#{@cached_serializer.object.id}-#{@cached_serializer.object.updated_at}" : @cached_serializer.object.cache_key
+        key = (@klass._cache_key) ? "#{@klass._cache_key}/#{@cached_serializer.object.id}-#{@cached_serializer.object.updated_at}" : @cached_serializer.object.cache_key
+        Rails.logger.info "AMS: cache key is: #{key} (#{@cached_serializer.class} #{@cached_serializer.object.id})"
+        key
       end
 
       def meta
